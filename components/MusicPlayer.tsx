@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 
@@ -10,43 +11,49 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ start }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Use the reliable archive.org download redirect link
+    // Piano version audio link
     const audioUrl = 'https://archive.org/download/HappyBirthdayToYouPianoVersion/Happy%20Birthday%20to%20You%20%28Piano%20Version%29.mp3';
     
-    audioRef.current = new Audio();
-    audioRef.current.src = audioUrl;
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.5;
-    audioRef.current.crossOrigin = "anonymous";
+    const audio = new Audio();
+    audio.src = audioUrl;
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
     
-    // Error handling
-    audioRef.current.onerror = (e) => {
-      console.error("Audio failed to load:", e);
-      // Fallback or retry logic could go here if needed
+    // Improved error handling to avoid [object Object]
+    audio.onerror = () => {
+      const error = audio.error;
+      console.error("Audio Load Error:", {
+        code: error?.code,
+        message: error?.message,
+        src: audioUrl
+      });
     };
+
+    audioRef.current = audio;
     
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = "";
         audioRef.current = null;
       }
     };
   }, []);
 
   useEffect(() => {
-    // Attempt autoplay if start is true
     if (start && audioRef.current) {
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
+      const playAudio = async () => {
+        try {
+          await audioRef.current?.play();
           setIsPlaying(true);
-        }).catch(error => {
-          // Autoplay was prevented.
-          // User must interact with the page first.
-          console.log("Autoplay prevented (waiting for user interaction):", error);
+        } catch (error) {
+          console.warn("Autoplay blocked or audio not ready. User interaction required:", error);
           setIsPlaying(false);
-        });
-      }
+        }
+      };
+      playAudio();
     }
   }, [start]);
 
@@ -55,7 +62,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ start }) => {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play();
+        audioRef.current.play().catch(e => console.error("Play failed:", e));
       }
       setIsPlaying(!isPlaying);
     }
@@ -76,12 +83,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ start }) => {
         <VolumeX size={24} className="text-gray-400 group-hover:text-rose-600" />
       )}
       
-      {/* Equalizer animation hint when playing */}
       {isPlaying && (
         <span className="absolute -top-1 -right-1 flex gap-0.5 h-3 items-end">
-          <span className="w-1 bg-rose-400 rounded-full animate-[bounce_1s_infinite]"></span>
-          <span className="w-1 bg-rose-400 rounded-full animate-[bounce_1.2s_infinite]"></span>
-          <span className="w-1 bg-rose-400 rounded-full animate-[bounce_0.8s_infinite]"></span>
+          <span className="w-1 bg-rose-400 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }}></span>
+          <span className="w-1 bg-rose-400 rounded-full animate-bounce" style={{ animationDuration: '0.8s' }}></span>
+          <span className="w-1 bg-rose-400 rounded-full animate-bounce" style={{ animationDuration: '0.5s' }}></span>
         </span>
       )}
     </button>
