@@ -9,8 +9,8 @@ import MusicPlayer from './components/MusicPlayer';
 const App: React.FC = () => {
   const [isRevealed, setIsRevealed] = useState(false);
 
-  // Set target date to December 25th, 2025
-  const [targetDate] = useState(() => new Date('2025-12-25T00:00:00'));
+  // Set target date to exactly 2 minutes (120,000ms) from now
+  const [targetDate] = useState(() => new Date(Date.now() + 2 * 60 * 1000));
 
   return (
     <div className="relative min-h-screen w-full bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 animate-gradient overflow-hidden">
